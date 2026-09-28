@@ -59,7 +59,7 @@ const ipOf = (c: any) => c.req.header("cf-connecting-ip") || "local";
 // Card-testing guard: few attempts per bond and per IP.
 async function payLimited(c: any, bondId: string) {
   if (devOk(c)) return false;
-  return (await limited(c.env.DB, `paybond:${bondId}`, 6, HOUR)) || (await limited(c.env.DB, `payip:${ipOf(c)}`, 20, HOUR));
+  return (await limited(c.env.DB, `paybond:${bondId}`, 6, HOUR)) || (await limited(c.env.DB, `payip:${ipOf(c)}`, 80, HOUR));
 }
 const termsText = (env: Env) => TERMS.replace("{H}", env.BOND_HOLD_HOURS);
 
@@ -285,7 +285,7 @@ app.post("/api/signup", async (c) => {
   const b = await c.req.json<any>().catch(() => ({}));
   const alias = String(b.alias || "").trim().toLowerCase();
   const email = String(b.email || "").trim().toLowerCase();
-  if (await limited(c.env.DB, `signup:${ipOf(c)}`, 5, HOUR)) return c.json({ error: "rate_limited" }, 429);
+  if (await limited(c.env.DB, `signup:${ipOf(c)}`, 40, HOUR)) return c.json({ error: "rate_limited" }, 429);
   if (!ALIAS_RE.test(alias) || RESERVED.has(alias)) return c.json({ error: "bad_alias", detail: "3-24 chars: a-z, 0-9, dash. Some names are reserved." }, 400);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || email.length > 200) return c.json({ error: "bad_email" }, 400);
   const cents = Math.min(Math.max(Math.round(Number(b.base_cents) || Number(c.env.DEFAULT_BOND_CENTS)), 50), 500);
@@ -310,7 +310,7 @@ app.get("/api/alias/:alias", async (c) => {
 
 // ---------- public bonded intake: web form + agent API ----------
 async function intake(c: any, alias: string, from: string, subject: string, text: string) {
-  if (await limited(c.env.DB, `intake:${ipOf(c)}`, 12, HOUR)) return { http: 429, body: { error: "rate_limited" } };
+  if (await limited(c.env.DB, `intake:${ipOf(c)}`, 60, HOUR)) return { http: 429, body: { error: "rate_limited" } };
   const r = await processInbound(c.env, { to: `${alias}@x`, from, subject: subject || "(no subject)", text, headers: {}, unverified: true });
   return { http: r.status === "rejected" ? 404 : 200, body: r };
 }
