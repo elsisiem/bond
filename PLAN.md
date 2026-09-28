@@ -1,5 +1,5 @@
 # Plan (scaled: start 12:29 PT, freeze 3:00 PT)
-- [ ] M0 Bootstrap: scaffold, handoff files, hello-world deploy
+- [x] M0 Bootstrap: scaffold, handoff files, hello-world deploy
 - [ ] M1 Money loop (simulated inbound): schema, alias, /api/dev/inbound, pricing, /b pay + Checkout manual capture, webhook->held, /d confirm+POST, release/capture, ledger, cron
 - [ ] M2 Real email: Email Worker inbound, challenge out, bonded delivery, backscatter guards
 - [ ] M3 Intelligence: Claude classify+price (zod), clustering, release-rate stat  (CUT: digest, reputation if behind)
