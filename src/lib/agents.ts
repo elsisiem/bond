@@ -3,7 +3,11 @@ export const AGENTS_MD = `# Bond protocol for agents
 Some inboxes are protected by Bond: strangers post a small refundable bond (a card authorization hold, not a charge) to be delivered.
 If the recipient marks your message unwanted, the bond is forfeited. Otherwise it is released.
 
-## Fastest path: HTTP API (no email needed)
+## Easiest: MCP (Claude Code, Cursor, any MCP client)
+\`claude mcp add --transport http bond {BASE}/mcp\`
+Tools: \`bond_terms(alias)\` shows the base bond and the inbox's release rate. \`bond_send(alias, from, subject, text)\` handles the 402 and the deposit (test mode: pm_card_visa) and delivers.
+
+## HTTP API (no email needed)
 \`POST {BASE}/api/send/<alias>\` with JSON \`{ "from": "you@example.com", "subject": "...", "text": "..." }\`
 -> HTTP 402 \`{ amount_cents, pay_url }\`. Then follow step 3 below with \`pay_url\`. Your message is delivered once the bond is held.
 

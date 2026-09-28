@@ -1,6 +1,6 @@
 # STATUS
 ## Now
-Design v2 deployed: light corporate theme, Source Serif 4 + IBM Plex Sans/Mono, inline SVG icons, no emojis anywhere. Next: pitch rework (deposit-layer for agent era), email linking (needs domain).
+Agent-first repositioning shipped: MCP server (/mcp: bond_terms, bond_send), webhook delivery (Slack/Discord/any), inbox-style dashboard, landing rewritten around deposits for agents. Next: gate middleware, agent budgets, pitch polish.
 ## Done
 M0; M1 (code + e2e Stripe test). Stripe CLI installed; `stripe listen --api-key <sk> --events checkout.session.completed,payment_intent.amount_capturable_updated,payment_intent.canceled,payment_intent.succeeded --forward-to http://localhost:8787/webhooks/stripe`.
 ## Brainbase

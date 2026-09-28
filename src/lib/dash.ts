@@ -126,7 +126,7 @@ export async function dashboardHtml(
   <div class="pane" data-view="history"><table><tr><th>From</th><th>Subject</th><th>Bond</th><th>Outcome</th></tr>${hist || '<tr><td colspan="4" class="muted">No decisions yet.</td></tr>'}</table></div>
   <div class="pane" data-view="waiting"><table><tr><th>From</th><th>Subject</th><th>Why held</th></tr>${wait || '<tr><td colspan="3" class="muted">Waiting room is empty.</td></tr>'}</table><div class="bar">Unpaid or unverified mail waits 7 days. Nothing is deleted.</div></div>
   <div class="pane" data-view="share"><div class="pad">
-    ${d.isNew ? '<div class="rec worth" style="font-size:15px">Your inbox is live. Copy your link below and share it.</div>' : ""}
+    ${d.isNew ? '<div class="rec worth" style="font-size:15px;margin:0 0 22px">Your inbox is live. Copy your link below and share it.</div>' : ""}
     <h2>Your bonded link</h2>
     <pre id="cl">${esc(contact)}</pre>
     <div class="row2"><button id="cpy" class="green">Copy link</button><a class="btn" href="/to/${esc(r.alias)}" style="background:var(--mut);color:#fff">Preview page</a></div>

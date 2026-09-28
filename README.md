@@ -1,25 +1,23 @@
 # Bond
 
-A bonded inbox. Strangers, especially AI agents, post a small refundable card hold to reach you.
-**Worth it** or no action: hold released. **Junk**: bond captured, you keep it. Known senders skip it. Unpaid mail waits 7 days.
+**Refundable deposits for AI agents.** Let agents in, keep the flood out.
 
 Live: https://bond.elsisi.workers.dev (Stripe TEST mode prototype)
 
-## Try it
-1. Landing page `/`: claim an inbox (returns a public link `/to/<name>` and a private dashboard `/r/<token>`).
-2. Open your `/to/<name>` link as a stranger, send a message, pay with card `4242 4242 4242 4242`.
-3. Open the dashboard: read the message, press Worth it or Junk.
-4. Agents: `POST /api/send/<alias>` -> 402 -> `POST <pay_url>/pay {"payment_method_id":"pm_card_visa"}`. Protocol at `/agents.md`.
-5. `/live` shows the real-time feed.
+Free identities broke CAPTCHAs, rate limits and blocklists. The one thing an agent cannot fake is money at risk. Bond puts a refundable card hold in front of any inbox, form or endpoint: honest use is refunded, abuse is kept by the gate owner.
+
+## Two sides
+- **Agents that send:** `claude mcp add --transport http bond https://bond.elsisi.workers.dev/mcp` adds `bond_terms` and `bond_send` to Claude Code, Cursor or any MCP client. Or `POST /api/send/<alias>` -> 402 -> `POST <pay_url>/pay`.
+- **Things that receive:** claim a gate on the landing page, share `/to/<name>`, get paid messages in Slack, Discord or any HTTPS webhook (or the built-in inbox) with one-click Worth it / Junk. Optional AI triage agent (Brainbase) applies your rules and recommends; it cannot move money.
 
 ## Stack
-Cloudflare Workers + Hono, D1, Cron, Stripe (manual-capture holds, webhooks), Anthropic Claude Haiku (classify + price; never moves money), Brainbase (agent platform, used for a real autonomous sender in the demo).
+Cloudflare Workers + Hono, D1, Cron, Stripe (manual-capture holds, webhooks), Anthropic Claude Haiku (classify + price; never moves money), Brainbase (hosted sender agent and triage agent).
 
 ## Safety
-Test mode only. HMAC-signed expiring links, GET renders / POST acts. Rate limits on intake, signup and payment (card testing). Anonymised public feed. Web intake ignores the allowlist because sender addresses are self-declared. Daily capture cap per recipient. Public release rate per inbox.
+Test mode only. HMAC-signed expiring links, GET renders / POST acts. Rate limits on intake, signup, MCP and payment. Anonymised public feed. Web/API/MCP intake ignores the allowlist. Webhooks: HTTPS, public hosts only, no redirects. Daily capture cap per gate. Public release rate per gate. Triage agent token can recommend but never decide.
 
 ## Dev
-`npm run db:local && npm run dev`, `npm run check`, `npm run swarm`, `npm run legit` (set `BASE=https://bond.elsisi.workers.dev` to target production). Secrets in `.dev.vars` (see `.dev.vars.example`) or `wrangler secret bulk`.
+`npm run check`, `npm run swarm`, `npm run legit`, `npm run brainbase` (set `BASE=https://bond.elsisi.workers.dev`). Secrets in `.dev.vars` (see `.dev.vars.example`) or `wrangler secret bulk`.
 
 ## Not done yet
-Real inbound/outbound email (needs a domain: Cloudflare Email Routing/Sending), payouts to recipients (Stripe Connect), email verification of owners.
+Email inbound/outbound and Gmail/Outlook linking (needs a domain), Stripe Connect payouts, gate middleware for third-party APIs, per-agent budgets.
