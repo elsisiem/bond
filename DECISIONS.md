@@ -2,3 +2,4 @@
 - Default branch `main`.
 - Time-boxed: hackathon freeze 3:00 PM PT; started 12:29 PM PT. Cut list applied early: digest + reputation discount deferred.
 - Stripe PaymentIntent created directly via Checkout (manual capture); decisions cancel/capture the PI.
+- D1 db renamed interruption-bond (id in wrangler.toml); wrangler logged in

@@ -10,8 +10,8 @@ run_worker_first = ["/api/*", "/b/*", "/d/*", "/r/*", "/webhooks/*", "/setup*", 
 
 [[d1_databases]]
 binding = "DB"
-database_name = "bond"
-database_id = "local-placeholder"
+database_name = "interruption-bond"
+database_id = "e63a1ac6-d6f3-4196-9763-47d3def466b2"
 
 [triggers]
 crons = ["*/5 * * * *"]
