@@ -8,6 +8,8 @@ import { TERMS, page } from "./lib/views";
 import { AGENTS_MD } from "./lib/agents";
 import { DEFAULT_POLICY, startTriage, triageAuth } from "./lib/triage";
 import { dashboardHtml } from "./lib/dash";
+import { handleMcp } from "./lib/mcp";
+import { pushWebhook, safeWebhook } from "./lib/deliver";
 
 export type { Env };
 const app = new Hono<{ Bindings: Env }>();
@@ -206,9 +208,25 @@ app.get("/r/:token", async (c) => {
   const held = await c.env.DB.prepare("SELECT b.id, b.amount_cents, m.from_email, m.subject, m.body, m.category, m.summary, b.rec_action, b.rec_reason FROM bonds b JOIN messages m ON m.id=b.message_id WHERE b.recipient_id=? AND b.status='held' ORDER BY b.held_at DESC LIMIT 50").bind(r.id).all<any>();
   const wr = await c.env.DB.prepare("SELECT from_email, subject, reason FROM messages WHERE recipient_id=? AND status='waiting_room' ORDER BY created_at DESC LIMIT 50").bind(r.id).all<any>();
   const hist = await c.env.DB.prepare("SELECT m.from_email, m.subject, b.amount_cents, b.status FROM bonds b JOIN messages m ON m.id=b.message_id WHERE b.recipient_id=? AND b.status IN ('released','captured') ORDER BY b.decided_at DESC LIMIT 50").bind(r.id).all<any>();
-  const body = await dashboardHtml(c.env, r, { earn: earn.s, rel: st?.rel || 0, dec: st?.dec || 0, held: held.results, waiting: wr.results, history: hist.results, triage: c.req.query("triage") });
+  const body = await dashboardHtml(c.env, r, { earn: earn.s, rel: st?.rel || 0, dec: st?.dec || 0, held: held.results, waiting: wr.results, history: hist.results, triage: c.req.query("triage"), hook: c.req.query("hook"), isNew: c.req.query("new") === "1" });
   return page("Dashboard", body, 200, true);
 });
+// ---------- MCP server: lets any MCP-capable agent reach a Bond inbox ----------
+app.post("/mcp", (c) => handleMcp(c.env, c.req.raw, ipOf(c)));
+app.get("/mcp", (c) => c.json({ name: "bond", type: "mcp", transport: "streamable-http", docs: `${c.env.PUBLIC_BASE_URL}/agents.md` }));
+
+// ---------- webhook delivery settings ----------
+app.post("/r/:token/webhook", async (c) => {
+  const r: any = await c.env.DB.prepare("SELECT * FROM recipients WHERE dashboard_token=?").bind(c.req.param("token")).first();
+  if (!r) return page("Not found", "<h1>Not found</h1>", 404);
+  const f = await c.req.parseBody();
+  const raw = String(f.url || "").trim();
+  if (raw && !safeWebhook(raw)) return c.redirect(`/r/${r.dashboard_token}?hook=invalid#share`, 303);
+  await c.env.DB.prepare("UPDATE recipients SET webhook_url=? WHERE id=?").bind(raw || null, r.id).run();
+  if (raw && f.test) await pushWebhook(c.env, raw, "Bond test: bonded messages for " + r.alias + " will appear here with Worth it / Junk links.", r.id);
+  return c.redirect(`/r/${r.dashboard_token}?hook=${raw ? (f.test ? "tested" : "saved") : "cleared"}#share`, 303);
+});
+
 // ---------- AI triage (Brainbase agent recommends; owner applies) ----------
 app.get("/api/triage/pending", async (c) => {
   const rid = await triageAuth(c.env, c.req.header("authorization"));

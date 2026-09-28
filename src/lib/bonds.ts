@@ -1,7 +1,7 @@
 import type { Env } from "../types";
 import { DAY, HOUR, esc, logEvent, now, signToken, usd } from "./util";
 import { stripeClient } from "./stripe";
-import { sendMail } from "./deliver";
+import { pushWebhook, sendMail } from "./deliver";
 
 export type Bond = {
   id: string; message_id: string; recipient_id: string; amount_cents: number; status: string;
@@ -53,7 +53,11 @@ export async function markHeld(env: Env, bondId: string, paymentIntentId: string
   await env.DB.prepare("UPDATE messages SET status='held' WHERE id=?").bind(b.message_id).run();
   await logEvent(env.DB, "bond_held", b.recipient_id, b.amount_cents, { bond: bondId });
   const mail = await bondedMail(env, bondId);
-  if (mail) await sendMail(env, mail, mail.recipientId, "bonded");
+  if (mail) {
+    await sendMail(env, mail, mail.recipientId, "bonded");
+    const hook = await env.DB.prepare("SELECT webhook_url FROM recipients WHERE id=?").bind(mail.recipientId).first<{ webhook_url: string | null }>();
+    if (hook?.webhook_url) await pushWebhook(env, hook.webhook_url, mail.text.slice(0, 1800), mail.recipientId);
+  }
   return true;
 }
 

@@ -5,13 +5,13 @@ import { DEFAULT_POLICY } from "./triage";
 
 const CSS = `
 <style>
-.app{display:grid;grid-template-columns:236px 1fr;height:calc(100vh - 56px);min-height:520px}
+.app{display:grid;grid-template-columns:260px 1fr;height:calc(100vh - 56px);min-height:520px}
 .side{border-right:1px solid var(--line);background:var(--paper);display:flex;flex-direction:column;padding:16px 12px;gap:14px;overflow:auto}
 .who b{display:block;font:600 19px "Source Serif 4",serif}.who span{font-size:13px;color:var(--mut)}
-.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.kpis div{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 11px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpis div{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:11px 13px}
 .kpis div.g{grid-column:1/3;background:var(--greenbg);border-color:var(--greenline)}
-.kpis b{display:block;font:600 21px "Source Serif 4",serif}.kpis .g b{color:var(--green)}.kpis span{font-size:11.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.kpis b{display:block;font:600 21px "Source Serif 4",serif}.kpis .g b{color:var(--green)}.kpis span{display:block;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}.kpis div{min-width:0}
 .tabs{display:flex;flex-direction:column;gap:2px}
 .tab{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;padding:10px 12px;border-radius:8px;background:transparent;color:var(--ink);font:500 14.5px "IBM Plex Sans";border:0;cursor:pointer}
 .tab:hover{background:var(--pill)}.tab.on{background:var(--greenbg);color:var(--green)}
@@ -73,7 +73,7 @@ const JS = `
 export async function dashboardHtml(
   env: Env,
   r: any,
-  d: { earn: number; rel: number; dec: number; held: any[]; waiting: any[]; history: any[]; triage?: string },
+  d: { earn: number; rel: number; dec: number; held: any[]; waiting: any[]; history: any[]; triage?: string; hook?: string; isNew?: boolean },
 ): Promise<string> {
   const tok = esc(r.dashboard_token);
   const rate = d.dec ? Math.round((100 * d.rel) / d.dec) + "%" : "n/a";
@@ -102,13 +102,13 @@ export async function dashboardHtml(
 <div class="app">
 <aside class="side">
   <div class="who"><b>${esc(r.alias)}</b><span>Base bond ${usd(r.base_cents)}</span></div>
-  <div class="kpis"><div class="g"><b>${usd(d.earn)}</b><span>Earned from junk</span></div><div><b>${d.held.length}</b><span>Pending</span></div><div><b>${rate}</b><span>Release rate</span></div></div>
+  <div class="kpis"><div class="g"><b>${usd(d.earn)}</b><span>Earned from junk</span></div><div><b>${d.held.length}</b><span>Pending</span></div><div><b>${rate}</b><span>Released</span></div></div>
   <nav class="tabs">
     <button class="tab" data-v="inbox">Inbox <em class="${d.held.length ? "dotn" : ""}">${d.held.length}</em></button>
     <button class="tab" data-v="triage">AI triage <em>${recCount || ""}</em></button>
     <button class="tab" data-v="history">Decided <em>${d.history.length}</em></button>
     <button class="tab" data-v="waiting">Waiting room <em>${d.waiting.length}</em></button>
-    <button class="tab" data-v="share">Share link</button>
+    <button class="tab" data-v="share">Share &amp; connect</button>
   </nav>
   <div class="muted" style="margin-top:auto;font-size:12px">Keep this page's URL private. Shortcuts: j / k to move.</div>
 </aside>
@@ -126,10 +126,18 @@ export async function dashboardHtml(
   <div class="pane" data-view="history"><table><tr><th>From</th><th>Subject</th><th>Bond</th><th>Outcome</th></tr>${hist || '<tr><td colspan="4" class="muted">No decisions yet.</td></tr>'}</table></div>
   <div class="pane" data-view="waiting"><table><tr><th>From</th><th>Subject</th><th>Why held</th></tr>${wait || '<tr><td colspan="3" class="muted">Waiting room is empty.</td></tr>'}</table><div class="bar">Unpaid or unverified mail waits 7 days. Nothing is deleted.</div></div>
   <div class="pane" data-view="share"><div class="pad">
-    <h2>Your public bonded link</h2>
+    ${d.isNew ? '<div class="rec worth" style="font-size:15px">Your inbox is live. Copy your link below and share it.</div>' : ""}
+    <h2>Your bonded link</h2>
     <pre id="cl">${esc(contact)}</pre>
-    <div class="row2"><button id="cpy">Copy link</button><a class="btn" href="/to/${esc(r.alias)}" style="background:var(--mut);color:#fff">Preview page</a></div>
-    <p class="muted">Put it in your bio, website or email signature. Strangers, including AI agents, post a refundable bond to reach you. Agents can also use <code>POST /api/send/${esc(r.alias)}</code>.</p>
+    <div class="row2"><button id="cpy" class="green">Copy link</button><a class="btn" href="/to/${esc(r.alias)}" style="background:var(--mut);color:#fff">Preview page</a></div>
+    <p class="muted">Anyone, or any agent, who uses this link posts a refundable bond to reach you. Use it as a contact-form action, in an issue template, a README or a bio.</p>
+    <h2 style="margin-top:34px">Get bonded messages where you work</h2>
+    <form method="post" action="/r/${tok}/webhook"><label>Slack, Discord or any HTTPS webhook URL<input name="url" type="url" placeholder="https://hooks.slack.com/services/..." value="${esc(r.webhook_url || "")}"></label>
+    <div class="row2"><button class="green">Save</button><button name="test" value="1">Save and send test</button></div></form>
+    <p class="muted">${d.hook === "invalid" ? "That URL is not allowed (HTTPS only, public hosts only). " : d.hook === "tested" ? "Saved. A test message was sent. " : d.hook === "saved" ? "Saved. " : d.hook === "cleared" ? "Webhook removed. " : ""}Each paid message is posted there with Worth it / Junk links.</p>
+    <h2 style="margin-top:34px">Let your agents reach others</h2>
+    <pre>claude mcp add --transport http bond ${esc(env.PUBLIC_BASE_URL)}/mcp</pre>
+    <p class="muted">Adds the <code>bond_send</code> and <code>bond_terms</code> tools to Claude Code, Cursor or any MCP client. Or call <code>POST ${esc(env.PUBLIC_BASE_URL)}/api/send/${esc(r.alias)}</code> directly.</p>
   </div></div>
 </div>
 </div>${JS}`;
