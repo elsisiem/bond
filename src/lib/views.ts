@@ -23,17 +23,23 @@ input:focus,textarea:focus{outline:2px solid var(--green);border-color:transpare
 .msg{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0}.msg .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.subj{font-weight:600;margin:6px 0}
 .rec{margin:8px 0;padding:9px 13px;border-radius:8px;font-size:14px;background:var(--bluebg);border:1px solid var(--blueline)}.rec.junk{background:var(--rustbg);border-color:var(--rustline)}.rec.worth{background:var(--greenbg);border-color:var(--greenline)}
 .pill{font-size:12px;padding:2px 9px;border-radius:99px;background:var(--pill);color:var(--mut)}
-#themeBtn{position:fixed;top:14px;right:14px;width:38px;height:38px;padding:0;display:grid;place-items:center;background:var(--paper);color:var(--ink);border:1px solid var(--line2)}
-#themeBtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.top{position:sticky;top:0;z-index:30;height:56px;display:flex;align-items:center;gap:22px;padding:0 20px;background:var(--paper);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:9px;font:600 20px "Source Serif 4",serif;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.brand i{width:28px;height:28px;border-radius:7px;background:var(--btn);color:var(--btnfg);display:grid;place-items:center}
+.brand svg,.top svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.top nav{display:flex;gap:4px;flex:1;overflow-x:auto}
+.top nav a{color:var(--mut);text-decoration:none;font-size:14.5px;padding:7px 12px;border-radius:7px;white-space:nowrap}.top nav a:hover{background:var(--pill);color:var(--ink)}
+#themeBtn{width:36px;height:36px;padding:0;display:grid;place-items:center;background:transparent;color:var(--ink);border:1px solid var(--line2);flex:none}
 #themeBtn .moon{display:none}[data-theme=dark] #themeBtn .sun{display:none}[data-theme=dark] #themeBtn .moon{display:block}
-`;
+main.wide{max-width:none;padding:0}
+@media(max-width:640px){.top{gap:10px;padding:0 12px}.brand span{display:none}}`;
 
 export const THEME_HEAD = `<script>try{var t=localStorage.getItem('bond-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>`;
-export const THEME_BTN = `<button id="themeBtn" aria-label="Toggle dark mode" title="Toggle dark mode"><svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg></button><script>document.getElementById('themeBtn').onclick=function(){var d=document.documentElement,n=d.dataset.theme==='dark'?'light':'dark';d.dataset.theme=n;try{localStorage.setItem('bond-theme',n)}catch(e){}}</script>`;
+export const THEME_BTN = `<header class="top"><a class="brand" href="/"><i><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg></i><span>Bond</span></a><nav><a href="/">Home</a><a href="/#how">How it works</a><a href="/#start">Get an inbox</a><a href="/live">Live</a><a href="/agents.md">Agent docs</a><a href="/terms">Terms</a></nav><button id="themeBtn" aria-label="Toggle dark mode" title="Toggle dark mode"><svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg></button></header><script>document.getElementById('themeBtn').onclick=function(){var d=document.documentElement,n=d.dataset.theme==='dark'?'light':'dark';d.dataset.theme=n;try{localStorage.setItem('bond-theme',n)}catch(e){}}</script>`;
 
-export function page(title: string, body: string, status = 200): Response {
+export function page(title: string, body: string, status = 200, wide = false): Response {
   return new Response(
-    `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)}</title>${THEME_HEAD}<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:wght@500;600&display=swap" rel="stylesheet"><style>${CSS}</style></head><body>${THEME_BTN}<main>${body}</main></body></html>`,
+    `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)}</title>${THEME_HEAD}<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:wght@500;600&display=swap" rel="stylesheet"><style>${CSS}</style></head><body>${THEME_BTN}<main class="${wide ? "wide" : ""}">${body}</main></body></html>`,
     { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } },
   );
 }

@@ -7,6 +7,7 @@ import { stripeClient, verifyStripeEvent } from "./lib/stripe";
 import { TERMS, page } from "./lib/views";
 import { AGENTS_MD } from "./lib/agents";
 import { DEFAULT_POLICY, startTriage, triageAuth } from "./lib/triage";
+import { dashboardHtml } from "./lib/dash";
 
 export type { Env };
 const app = new Hono<{ Bindings: Env }>();
@@ -190,6 +191,8 @@ app.post("/d/:token", async (c) => {
   const p = await verifyToken<Dec>(c.env.TOKEN_SECRET, c.req.param("token"));
   if (!p || p.t !== "dec") return page("Invalid", "<h1>Link invalid or expired</h1>", 404);
   const r = await decide(c.env, p.b, p.a);
+  const f: any = await c.req.parseBody().catch(() => ({}));
+  if (typeof f.back === "string" && /^[a-f0-9]{64}$/.test(f.back)) return c.redirect(`/r/${f.back}#inbox`, 303);
   if (!r.ok) return page("Done", `<h1>Already decided</h1><p class="muted">${esc(r.result)}</p>`);
   return page("Done", `<h1>${r.result === "captured" ? "Bond captured. It's yours." : "Bond released."}</h1>`);
 });
@@ -199,33 +202,13 @@ app.get("/r/:token", async (c) => {
   const r: any = await c.env.DB.prepare("SELECT * FROM recipients WHERE dashboard_token=?").bind(c.req.param("token")).first();
   if (!r) return page("Not found", "<h1>Not found</h1>", 404);
   const earn: any = await c.env.DB.prepare("SELECT COALESCE(SUM(cents),0) s FROM ledger WHERE recipient_id=?").bind(r.id).first();
-  const st: any = await c.env.DB.prepare("SELECT SUM(status='released') rel, SUM(status IN ('released','captured')) dec, SUM(status='held') held FROM bonds WHERE recipient_id=?").bind(r.id).first();
-  const held = await c.env.DB.prepare("SELECT b.id, b.amount_cents, m.from_email, m.subject, m.body, m.category, m.summary, b.rec_action, b.rec_reason FROM bonds b JOIN messages m ON m.id=b.message_id WHERE b.recipient_id=? AND b.status='held' ORDER BY b.held_at DESC LIMIT 20").bind(r.id).all<any>();
-  const wr = await c.env.DB.prepare("SELECT from_email, subject, reason FROM messages WHERE recipient_id=? AND status='waiting_room' ORDER BY created_at DESC LIMIT 20").bind(r.id).all<any>();
-  let heldRows = "";
-  for (const h of held.results) {
-    heldRows += `<div class="msg"><div class="row"><b>${esc(h.from_email)}</b><span class="pill">${usd(h.amount_cents)} bond</span>${h.category ? `<span class="pill">${esc(h.category)}</span>` : ""}</div>
-<div class="subj">${esc(h.subject)}</div>${h.rec_action ? `<div class="rec ${h.rec_action}">Triage agent recommends <b>${h.rec_action === "junk" ? "Junk" : "Worth it"}</b>: ${esc(h.rec_reason || "")}</div>` : ""}${h.summary ? `<div class="muted">AI summary: ${esc(h.summary)}</div>` : ""}<pre>${esc(String(h.body).slice(0, 1500))}</pre>
-<a class="btn green" href="/d/${await decisionToken(c.env, h.id, "worth")}">Worth it</a> <a class="btn red" href="/d/${await decisionToken(c.env, h.id, "junk")}">Junk, keep ${usd(h.amount_cents)}</a></div>`;
-  }
-  const contact = `${c.env.PUBLIC_BASE_URL}/to/${r.alias}`;
-  return page(
-    "Dashboard",
-    `<h1>${esc(r.alias)}</h1><p class="muted">Base bond ${usd(r.base_cents)} · messages arrive here, in your private dashboard. Keep this page's URL secret.</p>
-<div class="card"><b>Your public bonded contact link</b><pre id="cl">${esc(contact)}</pre><button onclick="navigator.clipboard.writeText(document.getElementById('cl').textContent);this.textContent='Copied'">Copy link</button> <a class="btn" href="/to/${esc(r.alias)}" style="background:#5a6878">Preview</a>
-<p class="muted">Put it in your bio, website or email signature. Strangers, including AI agents, post a refundable bond to reach you.</p></div>
-<div class="card"><div class="big">${usd(earn.s)}</div><span class="muted">earned from junk · ${st.dec ? Math.round((100 * (st.rel || 0)) / st.dec) + "% release rate" : "no decisions yet"} · ${st.held || 0} bonds held</span></div>
-<h2>AI triage <span class="pill">Brainbase agent</span></h2>
-<form class="card" method="post" action="/r/${esc(r.dashboard_token)}/policy"><label>Your rules, in plain English<textarea name="policy" rows="3" maxlength="1000" placeholder="${esc(DEFAULT_POLICY)}">${esc(r.policy || "")}</textarea></label>
-<button class="green">Save rules</button></form>
-<div class="card"><div class="row" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><form method="post" action="/r/${esc(r.dashboard_token)}/triage"><button>Run AI triage</button></form><form method="post" action="/r/${esc(r.dashboard_token)}/apply"><button class="green">Apply recommendations</button></form></div>
-<p class="muted">${c.req.query("triage") === "started" ? "Triage agent is running. Refresh in about a minute. " : c.req.query("triage") === "unavailable" ? "Triage is unavailable right now. " : ""}A Brainbase agent reads your held messages against your rules and recommends Worth it or Junk. It cannot move money. Nothing is decided until you press Apply or a button below.</p></div>
-<h2>Inbox: pending decisions</h2>${heldRows || '<div class="card muted">No bonded messages yet. Share your link.</div>'}
-<p class="muted">No action within ${esc(c.env.BOND_HOLD_HOURS)}h releases the sender's bond automatically.</p>
-<h2>Waiting room</h2><div class="card"><table>${wr.results.map((w) => `<tr><td>${esc(w.from_email)}</td><td>${esc(w.subject)}</td><td><span class="pill">${esc(w.reason)}</span></td></tr>`).join("") || '<tr><td class="muted">Empty</td></tr>'}</table></div>`,
-  );
+  const st: any = await c.env.DB.prepare("SELECT SUM(status='released') rel, SUM(status IN ('released','captured')) dec FROM bonds WHERE recipient_id=?").bind(r.id).first();
+  const held = await c.env.DB.prepare("SELECT b.id, b.amount_cents, m.from_email, m.subject, m.body, m.category, m.summary, b.rec_action, b.rec_reason FROM bonds b JOIN messages m ON m.id=b.message_id WHERE b.recipient_id=? AND b.status='held' ORDER BY b.held_at DESC LIMIT 50").bind(r.id).all<any>();
+  const wr = await c.env.DB.prepare("SELECT from_email, subject, reason FROM messages WHERE recipient_id=? AND status='waiting_room' ORDER BY created_at DESC LIMIT 50").bind(r.id).all<any>();
+  const hist = await c.env.DB.prepare("SELECT m.from_email, m.subject, b.amount_cents, b.status FROM bonds b JOIN messages m ON m.id=b.message_id WHERE b.recipient_id=? AND b.status IN ('released','captured') ORDER BY b.decided_at DESC LIMIT 50").bind(r.id).all<any>();
+  const body = await dashboardHtml(c.env, r, { earn: earn.s, rel: st?.rel || 0, dec: st?.dec || 0, held: held.results, waiting: wr.results, history: hist.results, triage: c.req.query("triage") });
+  return page("Dashboard", body, 200, true);
 });
-
 // ---------- AI triage (Brainbase agent recommends; owner applies) ----------
 app.get("/api/triage/pending", async (c) => {
   const rid = await triageAuth(c.env, c.req.header("authorization"));
@@ -260,14 +243,14 @@ app.post("/r/:token/policy", async (c) => {
   if (!r) return page("Not found", "<h1>Not found</h1>", 404);
   const f = await c.req.parseBody();
   await c.env.DB.prepare("UPDATE recipients SET policy=? WHERE id=?").bind(String(f.policy || "").slice(0, 1000) || null, r.id).run();
-  return c.redirect(`/r/${r.dashboard_token}`, 303);
+  return c.redirect(`/r/${r.dashboard_token}#triage`, 303);
 });
 app.post("/r/:token/triage", async (c) => {
   const r: any = await ownerByToken(c);
   if (!r) return page("Not found", "<h1>Not found</h1>", 404);
   if (await limited(c.env.DB, `triage:${r.id}`, 4, HOUR)) return page("Slow down", "<h1>Triage already ran a few times this hour</h1>", 429);
   const t = await startTriage(c.env, r);
-  return c.redirect(`/r/${r.dashboard_token}?triage=${t ? "started" : "unavailable"}`, 303);
+  return c.redirect(`/r/${r.dashboard_token}?triage=${t ? "started" : "unavailable"}#triage`, 303);
 });
 app.post("/r/:token/apply", async (c) => {
   const r: any = await ownerByToken(c);
