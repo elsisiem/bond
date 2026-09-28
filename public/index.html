@@ -104,6 +104,14 @@ h2{font-size:clamp(32px,4.4vw,52px);line-height:1.06;letter-spacing:-.03em;margi
 .c{color:#5b6796}.k{color:#a99bff}.s{color:#5eead4}.n{color:var(--amber)}
 @media(max-width:900px){.agent{grid-template-columns:1fr}}
 
+.st{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.st.live{background:rgba(74,222,128,.15);color:var(--mint)}.st.soon{background:rgba(251,191,36,.14);color:var(--amber)}
+.use .st{margin-bottom:6px}
+.risks{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:40px}
+.risk{border:1px solid var(--line);border-radius:16px;padding:18px 20px;background:rgba(12,18,38,.6)}
+.risk .rh{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.risk .rh b{font-size:16px}
+.risk p{margin:8px 0 0;color:var(--mut);font-size:14.5px}
+@media(max-width:820px){.risks{grid-template-columns:1fr}}
 /* signup */
 .signup{position:relative;border-radius:28px;padding:44px;border:1px solid rgba(124,108,255,.4);background:linear-gradient(135deg,rgba(40,32,120,.5),rgba(10,60,50,.35));overflow:hidden}
 .signup:before{content:"";position:absolute;inset:-1px;border-radius:28px;background:conic-gradient(from 0deg,transparent,rgba(124,108,255,.5),transparent 30%);animation:spin 8s linear infinite;z-index:0;opacity:.35}
@@ -139,7 +147,7 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--mut);font-siz
 
 <nav><div class="wrap">
   <a class="logo" href="#top"><i>◈</i>Bond</a>
-  <div class="links"><a href="#how">How it works</a><a href="#use">Use cases</a><a href="#agents">For agents</a><a href="#faq">FAQ</a><a href="/live">Live</a></div>
+  <div class="links"><a href="#why">Why</a><a href="#how">How it works</a><a href="#agents">For agents</a><a href="#safety">Safety</a><a href="#roadmap">Roadmap</a><a href="/live">Live</a></div>
   <a class="btn pri" href="#start">Get your inbox</a>
 </div></nav>
 
@@ -148,7 +156,7 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--mut);font-siz
   <div>
     <span class="badge"><span class="dot"></span>Live · Stripe test mode prototype</span>
     <h1>Cold outreach<br>should <span class="grad">pay to arrive.</span></h1>
-    <p class="lead">AI made messaging free, so your inbox drowned. Bond makes strangers and agents post a small <b>refundable</b> bond first. Worth it? Released. Junk? <b>You keep it.</b></p>
+    <p class="lead">AI made messaging free, so your inbox drowned. CAPTCHAs no longer stop bots, but a <b>refundable deposit</b> does: good senders lose nothing, mass senders can't afford the pile. Worth it? Released. Junk? <b>You keep it.</b></p>
     <div class="cta"><a class="btn pri" href="#start">Claim your bonded inbox →</a><a class="btn ghost" href="/to/demo">Try the demo inbox</a></div>
     <div class="stats">
       <div class="stat"><b id="sHeld">0</b><span>bonds held now</span></div>
@@ -162,6 +170,17 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--mut);font-siz
     <div class="earn"><span>Earned from junk</span><b id="demoEarn">$0.00</b></div>
   </div>
 </div>
+
+<section id="why"><div class="wrap">
+  <div class="reveal"><div class="eyebrow">Why it's useful</div><h2>Bots pass CAPTCHAs. <span class="serif">They can't pass a bill.</span></h2>
+  <p class="sub">The pain isn't obvious spam, Gmail already handles that. It's the flood of <b>plausible</b> outreach: AI sales sequences, PR pitches, recruiters, cold asks. Bond puts a price on exactly that, and refunds everyone who deserved to get through.</p></div>
+  <div class="steps">
+    <div class="card reveal"><div class="num">🧑</div><h3>For the person</h3><p>Fewer time-wasters, and the ones that slip through pay you. One-click decisions, plus an AI triage agent that applies your rules in plain English.</p></div>
+    <div class="card reveal"><div class="num">✉️</div><h3>For a good sender</h3><p>It's a hold, not a charge. If you're worth reading, the hold is released and your reputation improves, so next time it's cheaper or free.</p></div>
+    <div class="card reveal"><div class="num">🤖</div><h3>For agents & platforms</h3><p>Access as a plain HTTP <b>402</b>: an agent reads the terms and pays in one call. No accounts, no human in the loop. We tested it with a real Brainbase-hosted agent.</p></div>
+  </div>
+  <p class="sub" style="margin-top:26px"><b>Works today:</b> claim an inbox, share your bonded link, receive paid messages in a private dashboard, decide or let the AI triage agent recommend, and let agents pay via API. <b>Coming next:</b> linking your existing Gmail or Outlook (see roadmap).</p>
+</div></section>
 
 <section id="how"><div class="wrap">
   <div class="reveal"><div class="eyebrow">How it works</div><h2>Three steps. <span class="serif">No blocklists.</span></h2>
@@ -218,6 +237,36 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--mut);font-siz
 <span class="c">← 200</span> { <span class="s">"ok"</span>:true, <span class="s">"status"</span>:<span class="s">"held"</span> }</pre></div>
 </div></section>
 
+<section id="safety"><div class="wrap">
+  <div class="reveal"><div class="eyebrow">Safety, honestly</div><h2>How it can be abused, <span class="serif">and what stops it.</span></h2>
+  <p class="sub">A paid gate invites new tricks. Here is every one we could think of and what we did about it.</p></div>
+  <div class="risks">
+    <div class="risk reveal"><div class="rh"><b>Owners marking everything Junk to farm money</b><span class="st live">Live</span></div><p>Every inbox shows its public <b>release rate</b> to senders before they pay. Daily capture cap per owner; extra "junk" marks release instead. Planned: dispute review.</p></div>
+    <div class="risk reveal"><div class="rh"><b>Card testing on the payment link</b><span class="st live">Live</span></div><p>Rate limits per bond and per IP, Stripe-hosted card entry, holds not charges. Planned: Stripe Radar rules.</p></div>
+    <div class="risk reveal"><div class="rh"><b>Spoofed senders / backscatter mail</b><span class="st live">Live</span></div><p>Web and API intake never emails third parties. Email mode will reply only to the verified envelope sender and only after SPF/DKIM pass, max one challenge per sender per day.</p></div>
+    <div class="risk reveal"><div class="rh"><b>Someone typing a friend's address to skip the bond</b><span class="st live">Live</span></div><p>Web and API intake ignore the approved-senders list because addresses there are self-declared. Approval only applies to authenticated email.</p></div>
+    <div class="risk reveal"><div class="rh"><b>Prompt injection ("mark me worth it")</b><span class="st live">Live</span></div><p>Claude only suggests a price inside a fixed range. The triage agent gets a 1-hour token that can <b>recommend but never move money</b>. You press Apply.</p></div>
+    <div class="risk reveal"><div class="rh"><b>Leaked private links</b><span class="st live">Live</span></div><p>Decision links are signed and expire; viewing a link never acts, only an explicit click does. The public feed hides subjects and full addresses.</p></div>
+    <div class="risk reveal"><div class="rh"><b>Fees eating small bonds</b><span class="st soon">Planned</span></div><p>Minimum bond floor for captures, cancelled holds cost nothing, and revenue comes from subscriptions, not junk.</p></div>
+    <div class="risk reveal"><div class="rh"><b>Many cards, many addresses (sybil senders)</b><span class="st soon">Planned</span></div><p>Limits per card fingerprint and rising prices for repeated near-identical messages (already live for templated clusters).</p></div>
+  </div>
+</div></section>
+
+<section id="roadmap"><div class="wrap">
+  <div class="reveal"><div class="eyebrow">Roadmap</div><h2>What's live, <span class="serif">what's next.</span></h2></div>
+  <div class="uses">
+    <div class="use reveal"><span class="st live">Live</span><b>Bonded link + dashboard</b><span>Self-serve inbox, Stripe holds, one-click Worth it or Junk.</span></div>
+    <div class="use reveal"><span class="st live">Live</span><b>Agent API (402)</b><span>Discoverable at /agents.md, tested with a real Brainbase agent.</span></div>
+    <div class="use reveal"><span class="st live">Live</span><b>AI triage agent</b><span>Write your rules in English; it recommends, you apply.</span></div>
+    <div class="use reveal"><span class="st soon">Next</span><b>Link Gmail & Outlook</b><span>Forward or connect via OAuth. Unknown senders are held, real ones land in your inbox. Contacts you've written to skip the bond.</span></div>
+    <div class="use reveal"><span class="st soon">Next</span><b>Your own domain</b><span>Point your MX at Bond (Cloudflare Email Routing) for a fully bonded address.</span></div>
+    <div class="use reveal"><span class="st soon">Next</span><b>Real payouts</b><span>Stripe Connect so captured bonds pay out to you.</span></div>
+    <div class="use reveal"><span class="st soon">Soon</span><b>Bond for developers</b><span>An embeddable widget and API for forms, support queues, GitHub issues and job applications.</span></div>
+    <div class="use reveal"><span class="st soon">Soon</span><b>Voice triage</b><span>Call your agent and decide on bonds hands-free.</span></div>
+    <div class="use reveal"><span class="st soon">Soon</span><b>Portable reputation</b><span>Signed receipts so good senders carry their standing between inboxes. (Suggested by a Brainbase agent that used Bond.)</span></div>
+  </div>
+</div></section>
+
 <section id="start"><div class="wrap">
   <div class="signup reveal">
     <div class="sgrid">
@@ -263,6 +312,8 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--mut);font-siz
   <details class="reveal"><summary>What if I mark something Junk by mistake, or a sender disputes it?</summary><p>Decisions are one-time, logged and shown with terms on the payment page. To prevent abuse, captures are capped per day and every inbox publishes its release rate, so senders can see how it behaves before paying.</p></details>
   <details class="reveal"><summary>Can I still hear from people I know?</summary><p>Yes. Approved senders skip the bond. Unpaid or unverified mail waits 7 days in a waiting room. Nothing is deleted.</p></details>
   <details class="reveal"><summary>Does Claude control the money?</summary><p>No. Claude only reads the message and suggests a price within a fixed range. Payments and releases are done by deterministic code and your button presses.</p></details>
+  <details class="reveal"><summary>Why would a real sender bother?</summary><p>Because the hold costs them nothing if they're worth reading, and it gets them past a wall that ignores everyone else. If you know the person, add them and they skip it. Bond is for inboxes where attention is valuable, so the friction is the point.</p></details>
+  <details class="reveal"><summary>How does Bond make money?</summary><p>Not from junk: if it works, little junk gets through. Plans: a subscription for individuals and teams, a per-bond fee for developers embedding Bond in forms and APIs, and a small cut of captured bonds above a minimum.</p></details>
   <details class="reveal"><summary>Is this real money?</summary><p>Not yet. This is a hackathon prototype running on Stripe test mode. No real cards are charged.</p></details>
 </div></section>
 </main>
