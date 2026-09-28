@@ -12,7 +12,8 @@
     "db:local": "wrangler d1 migrations apply interruption-bond --local",
     "db:remote": "wrangler d1 migrations apply interruption-bond --remote",
     "swarm": "tsx scripts/simulate-swarm.ts",
-    "legit": "tsx scripts/legit-agent.ts"
+    "legit": "tsx scripts/legit-agent.ts",
+    "brainbase": "tsx scripts/brainbase-agent.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.129.0",

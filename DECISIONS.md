@@ -5,3 +5,4 @@
 - D1 db renamed interruption-bond (id in wrangler.toml); wrangler logged in
 - 2026-09-28: scripts excluded from tsc (Node/Workers type clash; run via tsx). /live served by explicit route to live.html. Secrets pushed via wrangler secret bulk JSON.
 - 2026-09-28: Web-first intake (/to/:alias, /api/send/:alias, /api/signup) because no domain yet; web intake ignores allowlist (sender address is self-declared). Public /api/events anonymised. Pay endpoints rate-limited via D1 rate_limits. Alias identity is a link, not an email, until M2.
+- 2026-09-28: Brainbase = agent platform (api.brainbaselabs.com/v2, Bearer key from app.brainbaselabs.com/api-keys); used as a real autonomous sender in the demo (scripts/brainbase-agent.ts), verified: it hit 402 and paid. Old docs.usebrainbase.com API (x-api-key) is a different product, key 401s there.
