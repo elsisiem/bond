@@ -1,0 +1,32 @@
+{
+  "name": "interruption-bond",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm run test",
+    "db:local": "wrangler d1 migrations apply bond --local",
+    "db:remote": "wrangler d1 migrations apply bond --remote",
+    "swarm": "tsx scripts/simulate-swarm.ts",
+    "legit": "tsx scripts/legit-agent.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.129.0",
+    "hono": "^4.13.10",
+    "postal-mime": "^4.0.0",
+    "stripe": "^22.6.2",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260702.1",
+    "@types/node": "^26.6.3",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.86.0"
+  }
+}

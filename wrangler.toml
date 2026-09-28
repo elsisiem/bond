@@ -1,0 +1,27 @@
+name = "bond"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*", "/b/*", "/d/*", "/r/*", "/webhooks/*", "/setup*", "/live*", "/agents.md", "/terms"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bond"
+database_id = "local-placeholder"
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+[vars]
+ROOT_DOMAIN = "example.com"
+PUBLIC_BASE_URL = "http://localhost:8787"
+OWNER_EMAIL = "owner@example.com"
+DEMO_ALIAS = "demo"
+DEFAULT_BOND_CENTS = "100"
+MAX_BOND_CENTS = "2500"
+BOND_HOLD_HOURS = "72"
+WAITING_ROOM_DAYS = "7"
