@@ -6,6 +6,7 @@ import { ensureDemoRecipient, processInbound } from "./lib/pipeline";
 import { stripeClient, verifyStripeEvent } from "./lib/stripe";
 import { TERMS, page } from "./lib/views";
 import { AGENTS_MD } from "./lib/agents";
+import { DEFAULT_POLICY, startTriage, triageAuth } from "./lib/triage";
 
 export type { Env };
 const app = new Hono<{ Bindings: Env }>();
@@ -199,12 +200,12 @@ app.get("/r/:token", async (c) => {
   if (!r) return page("Not found", "<h1>Not found</h1>", 404);
   const earn: any = await c.env.DB.prepare("SELECT COALESCE(SUM(cents),0) s FROM ledger WHERE recipient_id=?").bind(r.id).first();
   const st: any = await c.env.DB.prepare("SELECT SUM(status='released') rel, SUM(status IN ('released','captured')) dec, SUM(status='held') held FROM bonds WHERE recipient_id=?").bind(r.id).first();
-  const held = await c.env.DB.prepare("SELECT b.id, b.amount_cents, m.from_email, m.subject, m.body, m.category, m.summary FROM bonds b JOIN messages m ON m.id=b.message_id WHERE b.recipient_id=? AND b.status='held' ORDER BY b.held_at DESC LIMIT 20").bind(r.id).all<any>();
+  const held = await c.env.DB.prepare("SELECT b.id, b.amount_cents, m.from_email, m.subject, m.body, m.category, m.summary, b.rec_action, b.rec_reason FROM bonds b JOIN messages m ON m.id=b.message_id WHERE b.recipient_id=? AND b.status='held' ORDER BY b.held_at DESC LIMIT 20").bind(r.id).all<any>();
   const wr = await c.env.DB.prepare("SELECT from_email, subject, reason FROM messages WHERE recipient_id=? AND status='waiting_room' ORDER BY created_at DESC LIMIT 20").bind(r.id).all<any>();
   let heldRows = "";
   for (const h of held.results) {
     heldRows += `<div class="msg"><div class="row"><b>${esc(h.from_email)}</b><span class="pill">${usd(h.amount_cents)} bond</span>${h.category ? `<span class="pill">${esc(h.category)}</span>` : ""}</div>
-<div class="subj">${esc(h.subject)}</div>${h.summary ? `<div class="muted">AI summary: ${esc(h.summary)}</div>` : ""}<pre>${esc(String(h.body).slice(0, 1500))}</pre>
+<div class="subj">${esc(h.subject)}</div>${h.rec_action ? `<div class="rec ${h.rec_action}">🤖 Triage agent recommends <b>${h.rec_action === "junk" ? "Junk" : "Worth it"}</b>: ${esc(h.rec_reason || "")}</div>` : ""}${h.summary ? `<div class="muted">AI summary: ${esc(h.summary)}</div>` : ""}<pre>${esc(String(h.body).slice(0, 1500))}</pre>
 <a class="btn green" href="/d/${await decisionToken(c.env, h.id, "worth")}">Worth it</a> <a class="btn red" href="/d/${await decisionToken(c.env, h.id, "junk")}">Junk, keep ${usd(h.amount_cents)}</a></div>`;
   }
   const contact = `${c.env.PUBLIC_BASE_URL}/to/${r.alias}`;
@@ -214,10 +215,66 @@ app.get("/r/:token", async (c) => {
 <div class="card"><b>Your public bonded contact link</b><pre id="cl">${esc(contact)}</pre><button onclick="navigator.clipboard.writeText(document.getElementById('cl').textContent);this.textContent='Copied ✓'">Copy link</button> <a class="btn" href="/to/${esc(r.alias)}" style="background:#1f2842">Preview</a>
 <p class="muted">Put it in your bio, website or email signature. Strangers, including AI agents, post a refundable bond to reach you.</p></div>
 <div class="card"><div class="big">${usd(earn.s)}</div><span class="muted">earned from junk · ${st.dec ? Math.round((100 * (st.rel || 0)) / st.dec) + "% release rate" : "no decisions yet"} · ${st.held || 0} bonds held</span></div>
+<h2>AI triage <span class="pill">Brainbase agent</span></h2>
+<form class="card" method="post" action="/r/${esc(r.dashboard_token)}/policy"><label>Your rules, in plain English<textarea name="policy" rows="3" maxlength="1000" placeholder="${esc(DEFAULT_POLICY)}">${esc(r.policy || "")}</textarea></label>
+<button class="green">Save rules</button></form>
+<div class="card"><div class="row" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><form method="post" action="/r/${esc(r.dashboard_token)}/triage"><button>Run AI triage</button></form><form method="post" action="/r/${esc(r.dashboard_token)}/apply"><button class="green">Apply recommendations</button></form></div>
+<p class="muted">${c.req.query("triage") === "started" ? "Triage agent is running. Refresh in about a minute. " : c.req.query("triage") === "unavailable" ? "Triage is unavailable right now. " : ""}A Brainbase agent reads your held messages against your rules and recommends Worth it or Junk. It cannot move money. Nothing is decided until you press Apply or a button below.</p></div>
 <h2>Inbox: pending decisions</h2>${heldRows || '<div class="card muted">No bonded messages yet. Share your link.</div>'}
 <p class="muted">No action within ${esc(c.env.BOND_HOLD_HOURS)}h releases the sender's bond automatically.</p>
 <h2>Waiting room</h2><div class="card"><table>${wr.results.map((w) => `<tr><td>${esc(w.from_email)}</td><td>${esc(w.subject)}</td><td><span class="pill">${esc(w.reason)}</span></td></tr>`).join("") || '<tr><td class="muted">Empty</td></tr>'}</table></div>`,
   );
+});
+
+// ---------- AI triage (Brainbase agent recommends; owner applies) ----------
+app.get("/api/triage/pending", async (c) => {
+  const rid = await triageAuth(c.env, c.req.header("authorization"));
+  if (!rid) return c.json({ error: "unauthorized" }, 401);
+  const r: any = await c.env.DB.prepare("SELECT policy FROM recipients WHERE id=?").bind(rid).first();
+  const q = await c.env.DB.prepare(
+    `SELECT b.id bond_id, b.amount_cents, m.from_email "from", m.subject, m.body, m.category, m.summary, m.bulk_score, m.dupes,
+            COALESCE(s.released,0) sender_released, COALESCE(s.captured,0) sender_captured
+     FROM bonds b JOIN messages m ON m.id=b.message_id LEFT JOIN senders s ON s.email=m.from_email
+     WHERE b.recipient_id=? AND b.status='held' ORDER BY b.held_at LIMIT 25`,
+  ).bind(rid).all<any>();
+  return c.json({ policy: r?.policy || DEFAULT_POLICY, bonds: q.results.map((b) => ({ ...b, body: String(b.body).slice(0, 1500) })) });
+});
+
+app.post("/api/triage/recommend", async (c) => {
+  const rid = await triageAuth(c.env, c.req.header("authorization"));
+  if (!rid) return c.json({ error: "unauthorized" }, 401);
+  const b = await c.req.json<any>().catch(() => ({}));
+  if (!["worth", "junk"].includes(b.action) || !b.bond_id) return c.json({ error: "bad_request" }, 400);
+  const res = await c.env.DB.prepare("UPDATE bonds SET rec_action=?, rec_reason=? WHERE id=? AND recipient_id=? AND status='held'")
+    .bind(b.action, String(b.reason || "").slice(0, 300), String(b.bond_id), rid).run();
+  if (!res.meta.changes) return c.json({ error: "not_found_or_decided" }, 404);
+  await logEvent(c.env.DB, "triage_recommended", rid, null, { action: b.action });
+  return c.json({ ok: true });
+});
+
+async function ownerByToken(c: any) {
+  return c.env.DB.prepare("SELECT * FROM recipients WHERE dashboard_token=?").bind(c.req.param("token")).first();
+}
+app.post("/r/:token/policy", async (c) => {
+  const r: any = await ownerByToken(c);
+  if (!r) return page("Not found", "<h1>Not found</h1>", 404);
+  const f = await c.req.parseBody();
+  await c.env.DB.prepare("UPDATE recipients SET policy=? WHERE id=?").bind(String(f.policy || "").slice(0, 1000) || null, r.id).run();
+  return c.redirect(`/r/${r.dashboard_token}`, 303);
+});
+app.post("/r/:token/triage", async (c) => {
+  const r: any = await ownerByToken(c);
+  if (!r) return page("Not found", "<h1>Not found</h1>", 404);
+  if (await limited(c.env.DB, `triage:${r.id}`, 4, HOUR)) return page("Slow down", "<h1>Triage already ran a few times this hour</h1>", 429);
+  const t = await startTriage(c.env, r);
+  return c.redirect(`/r/${r.dashboard_token}?triage=${t ? "started" : "unavailable"}`, 303);
+});
+app.post("/r/:token/apply", async (c) => {
+  const r: any = await ownerByToken(c);
+  if (!r) return page("Not found", "<h1>Not found</h1>", 404);
+  const q = await c.env.DB.prepare("SELECT id, rec_action FROM bonds WHERE recipient_id=? AND status='held' AND rec_action IS NOT NULL").bind(r.id).all<any>();
+  for (const b of q.results) await decide(c.env, b.id, b.rec_action);
+  return c.redirect(`/r/${r.dashboard_token}`, 303);
 });
 
 // ---------- self-serve signup ----------

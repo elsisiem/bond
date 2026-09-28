@@ -7,6 +7,7 @@ export type Env = {
   TOKEN_SECRET: string;
   DEV_SIMULATE_SECRET: string;
   RESEND_API_KEY?: string;
+  BRAINBASE_API_KEY?: string;
   PUBLIC_BASE_URL: string;
   OWNER_EMAIL: string;
   ROOT_DOMAIN: string;

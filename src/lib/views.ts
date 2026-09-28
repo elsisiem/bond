@@ -13,6 +13,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:6px 8px;b
 a{color:#8ab4ff}pre{white-space:pre-wrap;background:#0d1322;padding:12px;border-radius:8px;font-size:14px}
 label{display:block;margin:12px 0;font-size:14px;color:#9aa4bf}input,textarea{display:block;width:100%;margin-top:6px;background:#0d1322;border:1px solid #26305a;border-radius:10px;padding:11px 12px;color:#e6e9f2;font:inherit}input:focus,textarea:focus{outline:2px solid #635bff;border-color:transparent}
 .msg{background:#121829;border:1px solid #1f2842;border-radius:14px;padding:16px;margin:14px 0}.msg .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.subj{font-weight:600;margin:6px 0}
+.rec{margin:8px 0;padding:8px 12px;border-radius:10px;font-size:14px;background:rgba(99,91,255,.14);border:1px solid rgba(99,91,255,.35)}.rec.junk{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.35)}.rec.worth{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.35)}
 .pill{font-size:12px;padding:2px 8px;border-radius:99px;background:#1f2842}
 `;
 
