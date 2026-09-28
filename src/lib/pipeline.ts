@@ -1,5 +1,5 @@
 import type { Env, Inbound } from "../types";
-import { DAY, HOUR, logEvent, now, uid, usd } from "./util";
+import { DAY, HOUR, handle, logEvent, now, uid, usd } from "./util";
 import { allowMatch, authFailed, isBulk, jaccard, price, shingles } from "./pricing";
 import { classify } from "./classify";
 import { payToken } from "./bonds";
@@ -55,7 +55,7 @@ export async function processInbound(env: Env, inb: Inbound): Promise<InboundRes
   };
 
   const al = await env.DB.prepare("SELECT pattern FROM allowlist WHERE recipient_id=?").bind(rec.id).all<{ pattern: string }>();
-  if (allowMatch(al.results.map((r) => r.pattern), from)) {
+  if (!inb.unverified && allowMatch(al.results.map((r) => r.pattern), from)) {
     const id = await store(env, rec, inb, "passed_free", { reason: "allowlist" });
     await logEvent(env.DB, "passed_free", rec.id, null, { from });
     await sendMail(env, { to: rec.email, subject: inb.subject, text: inb.text, replyTo: from }, rec.id, "free");
@@ -98,8 +98,8 @@ export async function processInbound(env: Env, inb: Inbound): Promise<InboundRes
   await logEvent(env.DB, "challenge", rec.id, cents, { from, category: c.category, bulk: c.bulk_score, dupes, subject: inb.subject.slice(0, 80) });
   await sendMail(env, {
     to: from,
-    subject: `Re: ${inb.subject.slice(0, 150)} — bond required to reach ${alias}@${env.ROOT_DOMAIN}`,
-    text: `${alias}@${env.ROOT_DOMAIN} protects their inbox with refundable bonds.\n\nTo deliver your message, place a ${usd(cents)} card hold (not a charge):\n${payUrl}\n\nIf the recipient marks it unwanted the bond is forfeited to them; otherwise it is released within ${env.BOND_HOLD_HOURS}h. Prototype, test mode.\n\nAgents: GET the link with Accept: application/json (HTTP 402). See ${env.PUBLIC_BASE_URL}/agents.md`,
+    subject: `Re: ${inb.subject.slice(0, 150)} — bond required to reach ${handle(env, alias)}`,
+    text: `${handle(env, alias)} protects their inbox with refundable bonds.\n\nTo deliver your message, place a ${usd(cents)} card hold (not a charge):\n${payUrl}\n\nIf the recipient marks it unwanted the bond is forfeited to them; otherwise it is released within ${env.BOND_HOLD_HOURS}h. Prototype, test mode.\n\nAgents: GET the link with Accept: application/json (HTTP 402). See ${env.PUBLIC_BASE_URL}/agents.md`,
     headers: { "X-Bond-Amount-Cents": String(cents), "X-Bond-Pay-Url": payUrl, "X-Bond-Currency": "usd" },
   }, rec.id, "challenge");
   return { status: "challenged", message_id: mid, price_cents: cents, pay_url: payUrl, category: c.category };

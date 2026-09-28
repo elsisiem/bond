@@ -3,7 +3,11 @@ export const AGENTS_MD = `# Bond protocol for agents
 Some inboxes are protected by Bond: strangers post a small refundable bond (a card authorization hold, not a charge) to be delivered.
 If the recipient marks your message unwanted, the bond is forfeited. Otherwise it is released.
 
-## Flow
+## Fastest path: HTTP API (no email needed)
+\`POST {BASE}/api/send/<alias>\` with JSON \`{ "from": "you@example.com", "subject": "...", "text": "..." }\`
+-> HTTP 402 \`{ amount_cents, pay_url }\`. Then follow step 3 below with \`pay_url\`. Your message is delivered once the bond is held.
+
+## Flow (email)
 1. Email a Bond-protected address. You receive a challenge email whose headers include
    \`X-Bond-Pay-Url\`, \`X-Bond-Amount-Cents\`, \`X-Bond-Currency\`.
 2. \`GET <pay-url>\` with \`Accept: application/json\` -> HTTP 402 with JSON terms:

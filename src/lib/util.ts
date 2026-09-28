@@ -12,6 +12,21 @@ export function esc(s: unknown): string {
 
 export const usd = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
+// Public handle for a recipient (link-based; real email addresses arrive with M2).
+export const handle = (env: { PUBLIC_BASE_URL: string }, alias: string) => `${new URL(env.PUBLIC_BASE_URL).host}/to/${alias}`;
+
+export const maskEmail = (e: unknown) => String(e ?? "").replace(/^(.).*?(@.*)$/, "$1***$2");
+
+/** D1-backed sliding-window limiter. Returns true when the caller is OVER the limit. */
+export async function limited(db: D1Database, key: string, max: number, windowMs: number): Promise<boolean> {
+  const t = now();
+  const r = await db.prepare("SELECT COUNT(*) c FROM rate_limits WHERE key=? AND ts>?").bind(key, t - windowMs).first<{ c: number }>();
+  if ((r?.c ?? 0) >= max) return true;
+  await db.prepare("INSERT INTO rate_limits (key,ts) VALUES (?,?)").bind(key, t).run();
+  if (Math.random() < 0.02) await db.prepare("DELETE FROM rate_limits WHERE ts<?").bind(t - DAY).run();
+  return false;
+}
+
 function b64u(buf: ArrayBuffer | Uint8Array): string {
   const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
   let s = "";

@@ -15,7 +15,7 @@ export async function inbound(from: string, subject: string, text: string) {
 }
 
 export async function payBond(payUrl: string) {
-  const r = await fetch(`${payUrl}/pay`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ payment_method_id: "pm_card_visa" }) });
+  const r = await fetch(`${payUrl}/pay`, { method: "POST", headers: H, body: JSON.stringify({ payment_method_id: "pm_card_visa" }) });
   return (await r.json()) as any;
 }
 

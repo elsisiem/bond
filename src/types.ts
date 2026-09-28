@@ -24,4 +24,5 @@ export type Inbound = {
   text: string;
   headers: Record<string, string>; // lower-case keys
   size?: number;
+  unverified?: boolean; // web/API intake: sender address is self-declared, so allowlist must not apply
 };

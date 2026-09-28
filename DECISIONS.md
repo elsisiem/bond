@@ -4,3 +4,4 @@
 - Stripe PaymentIntent created directly via Checkout (manual capture); decisions cancel/capture the PI.
 - D1 db renamed interruption-bond (id in wrangler.toml); wrangler logged in
 - 2026-09-28: scripts excluded from tsc (Node/Workers type clash; run via tsx). /live served by explicit route to live.html. Secrets pushed via wrangler secret bulk JSON.
+- 2026-09-28: Web-first intake (/to/:alias, /api/send/:alias, /api/signup) because no domain yet; web intake ignores allowlist (sender address is self-declared). Public /api/events anonymised. Pay endpoints rate-limited via D1 rate_limits. Alias identity is a link, not an email, until M2.
