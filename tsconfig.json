@@ -4,5 +4,6 @@
     "lib": ["ES2022"], "types": ["@cloudflare/workers-types", "node"],
     "strict": true, "noEmit": true, "skipLibCheck": true, "esModuleInterop": true
   },
-  "include": ["src", "scripts", "test"]
+  "include": ["src", "test"]
 }
+

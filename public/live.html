@@ -1,0 +1,51 @@
+<!doctype html>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bond - live</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}
+body{margin:0;background:#0a0e1a;color:#e6e9f2;font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:900px;margin:0 auto;padding:24px}
+h1{margin:0 0 4px}.muted{color:#8b93a7}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:20px 0}
+.card{background:#141a2e;border-radius:10px;padding:14px}.card b{display:block;font-size:28px}
+.money b{color:#4ade80}
+#feed{list-style:none;padding:0;margin:0}
+#feed li{padding:8px 12px;border-bottom:1px solid #1f2740;display:flex;gap:12px}
+#feed .t{color:#8b93a7;min-width:64px}#feed .k{min-width:190px;font-weight:600}
+.bond_captured{color:#4ade80}.bond_released{color:#60a5fa}.bond_held{color:#fbbf24}.waiting_room{color:#8b93a7}
+</style>
+<main>
+<h1>Bond <span class="muted">live</span></h1>
+<p class="muted">Strangers and AI agents post a refundable card hold to reach the inbox. Junk keeps the bond. Worth it releases it.</p>
+<div class="stats">
+<div class="card"><span class="muted">Held now</span><b id="held">0</b></div>
+<div class="card"><span class="muted">Released</span><b id="released">0</b></div>
+<div class="card"><span class="muted">Junk captured</span><b id="captured">0</b></div>
+<div class="card money"><span class="muted">Recipient earned</span><b id="cents">$0.00</b></div>
+<div class="card"><span class="muted">Waiting room</span><b id="waiting">0</b></div>
+</div>
+<ul id="feed"></ul>
+</main>
+<script>
+let since=0;const feed=document.getElementById("feed"),$=id=>document.getElementById(id);
+const usd=c=>"$"+((c||0)/100).toFixed(2);
+async function tick(){
+  try{
+    const j=await (await fetch("/api/events?since="+since)).json(), s=j.stats;
+    $("held").textContent=s.held;$("released").textContent=s.released;$("captured").textContent=s.captured;
+    $("cents").textContent=usd(s.captured_cents);$("waiting").textContent=s.waiting;
+    for(const e of j.events){
+      since=Math.max(since,e.id);
+      if(e.type.startsWith("mail_")||e.type.startsWith("payment_intent"))continue;
+      let d={};try{d=JSON.parse(e.data||"{}")}catch{}
+      const li=document.createElement("li");
+      li.innerHTML='<span class="t"></span><span class="k '+e.type+'"></span><span class="d"></span>';
+      li.children[0].textContent=new Date(e.ts).toLocaleTimeString();
+      li.children[1].textContent=e.type.replace(/_/g," ");
+      li.children[2].textContent=[d.from,d.category,e.cents?usd(e.cents):""].filter(Boolean).join(" - ");
+      feed.prepend(li);
+    }
+  }catch{}
+}
+tick();setInterval(tick,1500);
+</script>

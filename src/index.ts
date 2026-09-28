@@ -243,6 +243,7 @@ app.post("/webhooks/stripe", async (c) => {
   return c.json({ received: true });
 });
 
+app.get("/live", (c) => c.env.ASSETS.fetch(new Request(new URL("/live.html", c.req.url))));
 app.notFound((c) => c.env.ASSETS.fetch(c.req.raw));
 
 export default {

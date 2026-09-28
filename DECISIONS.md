@@ -3,3 +3,4 @@
 - Time-boxed: hackathon freeze 3:00 PM PT; started 12:29 PM PT. Cut list applied early: digest + reputation discount deferred.
 - Stripe PaymentIntent created directly via Checkout (manual capture); decisions cancel/capture the PI.
 - D1 db renamed interruption-bond (id in wrangler.toml); wrangler logged in
+- 2026-09-28: scripts excluded from tsc (Node/Workers type clash; run via tsx). /live served by explicit route to live.html. Secrets pushed via wrangler secret bulk JSON.
