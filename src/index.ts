@@ -88,7 +88,7 @@ app.get("/b/:token", async (c) => {
     );
   }
   if (bond.status !== "pending")
-    return page("Bond", `<h1>${bond.status === "held" ? "Bond posted ✓" : "Nothing to pay"}</h1><p class="muted">Status: ${esc(bond.status)}</p>`);
+    return page("Bond", `<h1>${bond.status === "held" ? "Bond posted" : "Nothing to pay"}</h1><p class="muted">Status: ${esc(bond.status)}</p>`);
   return page(
     "Post a bond",
     `<h1>Post a ${usd(bond.amount_cents)} bond</h1>
@@ -136,7 +136,7 @@ app.get("/b/:token/done", async (c) => {
   if (s.metadata?.bond_id !== x.bond.id) return page("Invalid", "<h1>Invalid</h1>", 400);
   const pi = typeof s.payment_intent === "string" ? s.payment_intent : s.payment_intent?.id;
   if (s.status === "complete" && pi) await markHeld(c.env, x.bond.id, pi);
-  return page("Bond posted", `<h1>Bond posted ✓</h1><p>Your message was delivered. The ${usd(x.bond.amount_cents)} hold is released automatically unless the recipient marks it unwanted.</p><p class="muted">${esc(termsText(c.env))}</p>`);
+  return page("Bond posted", `<h1>Bond posted</h1><p>Your message was delivered. The ${usd(x.bond.amount_cents)} hold is released automatically unless the recipient marks it unwanted.</p><p class="muted">${esc(termsText(c.env))}</p>`);
 });
 
 // Agent path: POST {payment_method_id}
@@ -191,7 +191,7 @@ app.post("/d/:token", async (c) => {
   if (!p || p.t !== "dec") return page("Invalid", "<h1>Link invalid or expired</h1>", 404);
   const r = await decide(c.env, p.b, p.a);
   if (!r.ok) return page("Done", `<h1>Already decided</h1><p class="muted">${esc(r.result)}</p>`);
-  return page("Done", `<h1>${r.result === "captured" ? "Bond captured — it's yours." : "Bond released."} ✓</h1>`);
+  return page("Done", `<h1>${r.result === "captured" ? "Bond captured. It's yours." : "Bond released."}</h1>`);
 });
 
 // ---------- dashboard ----------
@@ -205,14 +205,14 @@ app.get("/r/:token", async (c) => {
   let heldRows = "";
   for (const h of held.results) {
     heldRows += `<div class="msg"><div class="row"><b>${esc(h.from_email)}</b><span class="pill">${usd(h.amount_cents)} bond</span>${h.category ? `<span class="pill">${esc(h.category)}</span>` : ""}</div>
-<div class="subj">${esc(h.subject)}</div>${h.rec_action ? `<div class="rec ${h.rec_action}">🤖 Triage agent recommends <b>${h.rec_action === "junk" ? "Junk" : "Worth it"}</b>: ${esc(h.rec_reason || "")}</div>` : ""}${h.summary ? `<div class="muted">AI summary: ${esc(h.summary)}</div>` : ""}<pre>${esc(String(h.body).slice(0, 1500))}</pre>
+<div class="subj">${esc(h.subject)}</div>${h.rec_action ? `<div class="rec ${h.rec_action}">Triage agent recommends <b>${h.rec_action === "junk" ? "Junk" : "Worth it"}</b>: ${esc(h.rec_reason || "")}</div>` : ""}${h.summary ? `<div class="muted">AI summary: ${esc(h.summary)}</div>` : ""}<pre>${esc(String(h.body).slice(0, 1500))}</pre>
 <a class="btn green" href="/d/${await decisionToken(c.env, h.id, "worth")}">Worth it</a> <a class="btn red" href="/d/${await decisionToken(c.env, h.id, "junk")}">Junk, keep ${usd(h.amount_cents)}</a></div>`;
   }
   const contact = `${c.env.PUBLIC_BASE_URL}/to/${r.alias}`;
   return page(
     "Dashboard",
     `<h1>${esc(r.alias)}</h1><p class="muted">Base bond ${usd(r.base_cents)} · messages arrive here, in your private dashboard. Keep this page's URL secret.</p>
-<div class="card"><b>Your public bonded contact link</b><pre id="cl">${esc(contact)}</pre><button onclick="navigator.clipboard.writeText(document.getElementById('cl').textContent);this.textContent='Copied ✓'">Copy link</button> <a class="btn" href="/to/${esc(r.alias)}" style="background:#1f2842">Preview</a>
+<div class="card"><b>Your public bonded contact link</b><pre id="cl">${esc(contact)}</pre><button onclick="navigator.clipboard.writeText(document.getElementById('cl').textContent);this.textContent='Copied'">Copy link</button> <a class="btn" href="/to/${esc(r.alias)}" style="background:#5a6878">Preview</a>
 <p class="muted">Put it in your bio, website or email signature. Strangers, including AI agents, post a refundable bond to reach you.</p></div>
 <div class="card"><div class="big">${usd(earn.s)}</div><span class="muted">earned from junk · ${st.dec ? Math.round((100 * (st.rel || 0)) / st.dec) + "% release rate" : "no decisions yet"} · ${st.held || 0} bonds held</span></div>
 <h2>AI triage <span class="pill">Brainbase agent</span></h2>

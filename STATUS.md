@@ -1,6 +1,6 @@
 # STATUS
 ## Now
-FINAL CANDIDATE deployed at https://bond.elsisi.workers.dev. Landing has Why-useful, Safety (risk -> mitigation), Roadmap (live vs next) and FAQ (money). Prod regression passed (swarm, legit, Brainbase sender, AI triage, Stripe Checkout redirect). Human still to click: real Checkout card entry with 4242.
+Design v2 deployed: light corporate theme, Source Serif 4 + IBM Plex Sans/Mono, inline SVG icons, no emojis anywhere. Next: pitch rework (deposit-layer for agent era), email linking (needs domain).
 ## Done
 M0; M1 (code + e2e Stripe test). Stripe CLI installed; `stripe listen --api-key <sk> --events checkout.session.completed,payment_intent.amount_capturable_updated,payment_intent.canceled,payment_intent.succeeded --forward-to http://localhost:8787/webhooks/stripe`.
 ## Brainbase
@@ -15,6 +15,7 @@ Domain (M2). RESEND_API_KEY empty. Note: unused extra D1 interruption-bond (e63a
 npm run db:local; npm run dev; stripe listen (above); POST /api/dev/inbound with x-dev-secret; agent pay: POST pay_url/pay {"payment_method_id":"pm_card_visa"}. npm run check.
 ## Gotchas
 Bond mail/challenge sending stubbed (events only) until M2. Decision links on /r/{dashboardToken} (GET /api/dev/demo).
+
 
 
 
