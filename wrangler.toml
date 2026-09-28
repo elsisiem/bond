@@ -10,15 +10,15 @@ run_worker_first = ["/api/*", "/b/*", "/d/*", "/r/*", "/webhooks/*", "/setup*", 
 
 [[d1_databases]]
 binding = "DB"
-database_name = "interruption-bond"
-database_id = "e63a1ac6-d6f3-4196-9763-47d3def466b2"
+database_name = "bond"
+database_id = "0230dedd-4a21-4608-b80b-06e36c4a3326"
 
 [triggers]
 crons = ["*/5 * * * *"]
 
 [vars]
 ROOT_DOMAIN = "example.com"
-PUBLIC_BASE_URL = "http://localhost:8787"
+PUBLIC_BASE_URL = "https://bond.elsisi.workers.dev"
 OWNER_EMAIL = "owner@example.com"
 DEMO_ALIAS = "demo"
 DEFAULT_BOND_CENTS = "100"
