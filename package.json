@@ -1,6 +1,7 @@
 {
   "name": "interruption-bond",
   "version": "0.1.0",
+  "description": "Refundable deposits for AI agents. Let agents in, keep the flood out.",
   "private": true,
   "type": "module",
   "scripts": {
