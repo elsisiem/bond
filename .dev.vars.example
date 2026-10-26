@@ -1,7 +1,14 @@
+# required: Stripe secret key in test mode (sk_test_...)
 STRIPE_SECRET_KEY=
+# required: signing secret of the Stripe webhook endpoint (whsec_...), printed by stripe listen locally
 STRIPE_WEBHOOK_SECRET=
-ANTHROPIC_API_KEY=
+# required: any long random string, signs pay, decision and triage links
 TOKEN_SECRET=
+# optional: enables /api/dev/* and the demo scripts, leave unset on a public deployment
 DEV_SIMULATE_SECRET=
-RESEND_API_KEY=
+# optional: lets Claude Haiku score messages for pricing, without it every bond is the base amount
+ANTHROPIC_API_KEY=
+# optional: enables AI triage and npm run brainbase
 BRAINBASE_API_KEY=
+# optional, local dev only: make pay and dashboard links point at the dev server
+# PUBLIC_BASE_URL=http://localhost:8787
