@@ -98,7 +98,7 @@ export async function processInbound(env: Env, inb: Inbound): Promise<InboundRes
   await logEvent(env.DB, "challenge", rec.id, cents, { from, category: c.category, bulk: c.bulk_score, dupes, subject: inb.subject.slice(0, 80) });
   await sendMail(env, {
     to: from,
-    subject: `Re: ${inb.subject.slice(0, 150)} — bond required to reach ${handle(env, alias)}`,
+    subject: `Re: ${inb.subject.slice(0, 150)} (bond required to reach ${handle(env, alias)})`,
     text: `${handle(env, alias)} protects their inbox with refundable bonds.\n\nTo deliver your message, place a ${usd(cents)} card hold (not a charge):\n${payUrl}\n\nIf the recipient marks it unwanted the bond is forfeited to them; otherwise it is released within ${env.BOND_HOLD_HOURS}h. Prototype, test mode.\n\nAgents: GET the link with Accept: application/json (HTTP 402). See ${env.PUBLIC_BASE_URL}/agents.md`,
     headers: { "X-Bond-Amount-Cents": String(cents), "X-Bond-Pay-Url": payUrl, "X-Bond-Currency": "usd" },
   }, rec.id, "challenge");

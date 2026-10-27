@@ -31,7 +31,7 @@ export async function bondedMail(env: Env, bondId: string) {
   const j = `${base}/d/${await decisionToken(env, bondId, "junk")}`;
   const amt = usd(b.amount_cents);
   const hours = env.BOND_HOLD_HOURS;
-  const text = `BONDED MESSAGE — the sender posted a ${amt} refundable bond to reach you.\nWorth it (release bond, trust sender): ${w}\nJunk (keep the ${amt}): ${j}\nNo action = bond auto-released within ${hours}h.\n\n----\nFrom: ${m.from_email}\nSubject: ${m.subject}\n\n${m.body}`;
+  const text = `BONDED MESSAGE: the sender posted a ${amt} refundable bond to reach you.\nWorth it (release bond, trust sender): ${w}\nJunk (keep the ${amt}): ${j}\nNo action = bond auto-released within ${hours}h.\n\n----\nFrom: ${m.from_email}\nSubject: ${m.subject}\n\n${m.body}`;
   const html = `<div style="font-family:system-ui,sans-serif;max-width:640px"><div style="background:#0b1020;color:#fff;padding:14px 16px;border-radius:10px"><b>Bonded message</b> · sender posted <b>${amt}</b> · auto-releases in ${esc(hours)}h<br><br><a href="${esc(w)}" style="background:#22c55e;color:#04210f;padding:9px 16px;border-radius:8px;text-decoration:none;font-weight:600">Worth it</a> &nbsp; <a href="${esc(j)}" style="background:#ef4444;color:#fff;padding:9px 16px;border-radius:8px;text-decoration:none;font-weight:600">Junk (keep ${amt})</a></div><p style="color:#555">From ${esc(m.from_email)}</p><h3>${esc(m.subject)}</h3><pre style="white-space:pre-wrap;font-family:inherit">${esc(m.body)}</pre></div>`;
   return {
     to: r.email as string,
